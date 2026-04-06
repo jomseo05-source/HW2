@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Age & Gender Prediction</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #8e2de2;
+            --secondary: #4a00e0;
+            --bg-dark: #0f111a;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --text-main: #ffffff;
+            --text-dim: #a0a0c0;
+            --accent: #00f2fe;
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background: radial-gradient(circle at top right, #1a1c2c, #0f111a);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            z-index: 1;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fff 0%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        p.subtitle {
+            color: var(--text-dim);
+            font-size: 1.1rem;
+        }
+
+        .upload-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            animation: fadeInUp 1s ease-out;
+        }
+
+        .upload-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 30px 60px -12px rgba(142, 45, 226, 0.2);
+        }
+
+        .drop-zone {
+            width: 100%;
+            height: 250px;
+            border: 2px dashed var(--glass-border);
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .drop-zone:hover {
+            border-color: var(--primary);
+            background: rgba(142, 45, 226, 0.05);
+        }
+
+        .drop-zone.active {
+            border-color: var(--accent);
+            background: rgba(0, 242, 254, 0.1);
+        }
+
+        .drop-zone svg {
+            width: 64px;
+            height: 64px;
+            fill: var(--text-dim);
+            margin-bottom: 15px;
+            transition: fill 0.3s ease;
+        }
+
+        .drop-zone:hover svg {
+            fill: var(--primary);
+        }
+
+        #preview-img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            border-radius: 12px;
+            display: none;
+            z-index: 2;
+        }
+
+        .drop-zone p {
+            color: var(--text-dim);
+            font-size: 0.95rem;
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        .btn-predict {
+            width: 100%;
+            margin-top: 25px;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-predict:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-predict:hover:not(:disabled) {
+            filter: brightness(1.1);
+            box-shadow: 0 0 20px rgba(142, 45, 226, 0.4);
+        }
+
+        /* Results Display */
+        .result-container {
+            margin-top: 30px;
+            display: none;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .result-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
+            padding: 20px;
+            border-radius: 16px;
+            text-align: center;
+        }
+
+        .result-label {
+            color: var(--text-dim);
+            display: block;
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .result-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        footer {
+            margin-top: 40px;
+            color: var(--text-dim);
+            font-size: 0.85rem;
+            text-align: center;
+        }
+
+        /* Background animated circles */
+        .circle {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: 0;
+            opacity: 0.4;
+        }
+
+        .circle-1 {
+            width: 400px;
+            height: 400px;
+            background: var(--primary);
+            top: -100px;
+            left: -100px;
+        }
+
+        .circle-2 {
+            width: 300px;
+            height: 300px;
+            background: var(--secondary);
+            bottom: -50px;
+            right: -50px;
+        }
+    </style>
+</head>
+<body>
+    <div class="circle circle-1"></div>
+    <div class="circle circle-2"></div>
+
+    <div class="container">
+        <header>
+            <h1>AI Insight</h1>
+            <p class="subtitle">AI가 당신의 나이와 성별을 분석해 드립니다.</p>
+        </header>
+
+        <main class="upload-card">
+            <div class="drop-zone" id="drop-zone">
+                <svg viewBox="0 0 24 24">
+                    <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/>
+                </svg>
+                <p id="drop-text">업로드할 파일을 선택하거나 여기로 끌어다 놓으세요.</p>
+                <img id="preview-img" src="" alt="Preivew">
+            </div>
+            <input type="file" id="file-input" accept="image/*">
+
+            <button class="btn-predict" id="btn-predict" disabled>
+                <div class="spinner" id="spinner"></div>
+                <span id="btn-text">분석 시작하기</span>
+            </button>
+
+            <div class="result-container" id="result-container">
+                <div class="result-grid">
+                    <div class="result-item">
+                        <span class="result-label">예상 나이</span>
+                        <div class="result-value"><span id="res-age">-</span>세</div>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">예상 성별</span>
+                        <div class="result-value" id="res-gender">-</div>
+                    </div>
+                </div>
+                <div style="text-align: center; margin-top: 15px; color: var(--text-dim); font-size: 0.8rem;">
+                    분석 신뢰도: <span id="res-confidence">0</span>%
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            &copy; 2026 MLOps Age Prediction API Team. All rights reserved.
+        </footer>
+    </div>
+
+    <script>
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const btnPredict = document.getElementById('btn-predict');
+        const previewImg = document.getElementById('preview-img');
+        const dropText = document.getElementById('drop-text');
+        const spinner = document.getElementById('spinner');
+        const btnText = document.getElementById('btn-text');
+        const resultContainer = document.getElementById('result-container');
+
+        let selectedFile = null;
+
+        // Click to upload
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        // File drag and drop
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, e => {
+                e.preventDefault();
+                e.stopPropagation();
+            }, false);
+        });
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.add('active'), false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.remove('active'), false);
+        });
+
+        dropZone.addEventListener('drop', e => {
+            const file = e.dataTransfer.files[0];
+            handleFile(file);
+        });
+
+        fileInput.addEventListener('change', e => {
+            handleFile(e.target.files[0]);
+        });
+
+        function handleFile(file) {
+            if (file && file.type.startsWith('image/')) {
+                selectedFile = file;
+                const reader = new FileReader();
+                reader.onload = e => {
+                    previewImg.src = e.target.result;
+                    previewImg.style.display = 'block';
+                    dropText.style.display = 'none';
+                    btnPredict.disabled = false;
+                    resultContainer.style.display = 'none';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        btnPredict.addEventListener('click', async () => {
+            if (!selectedFile) return;
+
+            setLoading(true);
+
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+
+            try {
+                const response = await fetch('/predict/age', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.status === 'success') {
+                    showResults(data.prediction);
+                } else {
+                    alert('에러 발생: ' + (data.detail || '알 수 없는 오류'));
+                }
+            } catch (err) {
+                alert('서버와 통신 중 에러가 발생했습니다: ' + err.message);
+            } finally {
+                setLoading(false);
+            }
+        });
+
+        function setLoading(isLoading) {
+            if (isLoading) {
+                spinner.style.display = 'block';
+                btnText.textContent = '분석 중...';
+                btnPredict.disabled = true;
+                dropZone.style.pointerEvents = 'none';
+            } else {
+                spinner.style.display = 'none';
+                btnText.textContent = '분석 시작하기';
+                btnPredict.disabled = false;
+                dropZone.style.pointerEvents = 'auto';
+            }
+        }
+
+        function showResults(prediction) {
+            document.getElementById('res-age').textContent = prediction.age;
+            document.getElementById('res-gender').textContent = (prediction.gender === 'Man' ? '남성' : '여성');
+            document.getElementById('res-confidence').textContent = prediction.gender_confidence;
+            resultContainer.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

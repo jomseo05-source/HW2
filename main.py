@@ -5,21 +5,18 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2" # Suppress TF info and warning logs
 import cv2
 import numpy as np
 from fastapi import FastAPI, File, UploadFile, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 from deepface import DeepFace
 
 app = FastAPI(
-    title="Age Prediction API",
-    description="A simple MLOps API to predict age from an uploaded face image.",
-    version="1.0.0"
+    title="Age & Gender Prediction API",
+    description="A simple MLOps API to predict age and gender from an uploaded face image.",
+    version="1.1.0"
 )
 
 @app.get("/")
 def read_root():
-    return {
-        "status": "active",
-        "message": "Welcome to the Age Prediction Server! Send a POST request with an image to /predict/age."
-    }
+    return FileResponse("index.html")
 
 @app.post("/predict/age")
 async def predict_age(file: UploadFile = File(...)):
