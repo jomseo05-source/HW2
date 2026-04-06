@@ -1,0 +1,8 @@
+# 무거운 파일이나 보안상 민감한 파일이 Docker 이미지에 들어가지 않도록 설정
+venv/
+.env
+__pycache__/
+*.pyc
+.git/
+.github/
+.deepface/
