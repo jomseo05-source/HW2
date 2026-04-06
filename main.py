@@ -46,25 +46,32 @@ async def predict_age(file: UploadFile = File(...)):
 
         # Handle results (first detected face)
         result = results[0] if isinstance(results, list) else results
+        
+        print(f"Debug - Analysis Result Keys: {result.keys()}") # Log keys for debugging
 
-        predicted_age = result['age']
-        predicted_gender = result['dominant_gender']
-        gender_confidence = result['gender'][predicted_gender]
+        predicted_age = result.get('age')
+        predicted_gender = result.get('dominant_gender')
+        
+        # Safer extraction of confidence
+        gender_dict = result.get('gender', {})
+        gender_confidence = gender_dict.get(predicted_gender, 0)
 
         return JSONResponse(content={
             "filename": file.filename,
             "prediction": {
                 "age": predicted_age,
                 "gender": predicted_gender,
-                "gender_confidence": round(gender_confidence, 2)
+                "gender_confidence": round(gender_confidence, 2) if gender_confidence else 0
             },
             "status": "success",
             "message": "Model updated: Now including gender prediction!"
         })
 
     except ValueError as ve:
-        # Expected exception when no face is detected
+        print(f"ValueError: {str(ve)}")
         raise HTTPException(status_code=400, detail=f"Face detection failed: {str(ve)}")
     except Exception as e:
-        # Catch unexpected errors
-        raise HTTPException(status_code=500, detail=f"Internal Server Error during inference: {str(e)}")
+        import traceback
+        print(f"Exception during prediction: {str(e)}")
+        print(traceback.format_exc()) # Print full traceback to docker logs
+        raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
