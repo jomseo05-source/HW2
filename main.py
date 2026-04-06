@@ -37,27 +37,29 @@ async def predict_age(file: UploadFile = File(...)):
         if img is None:
             raise HTTPException(status_code=400, detail="Invalid image encoding. Could not read the image.")
 
-        # Perform age prediction using DeepFace
-        # Note: enforce_detection=True ensures that a face must be detected in the image
+        # Perform age and gender prediction using DeepFace
         results = DeepFace.analyze(
             img_path=img,
-            actions=['age'],
+            actions=['age', 'gender'],
             enforce_detection=True
         )
 
-        # Handle both single and multiple face detections gracefully
-        if isinstance(results, list):
-            # If multiple faces detect, let's just return the age for the primary face (first one)
-            result = results[0]
-        else:
-            result = results
+        # Handle results (first detected face)
+        result = results[0] if isinstance(results, list) else results
 
         predicted_age = result['age']
+        predicted_gender = result['dominant_gender']
+        gender_confidence = result['gender'][predicted_gender]
 
         return JSONResponse(content={
             "filename": file.filename,
-            "predicted_age": predicted_age,
-            "status": "success"
+            "prediction": {
+                "age": predicted_age,
+                "gender": predicted_gender,
+                "gender_confidence": round(gender_confidence, 2)
+            },
+            "status": "success",
+            "message": "Model updated: Now including gender prediction!"
         })
 
     except ValueError as ve:
