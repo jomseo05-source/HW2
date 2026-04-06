@@ -10,7 +10,7 @@ ENV PYTHONUNBUFFERED=1 \
 
 # OpenCV가 리눅스 환경에서 의존하는 시스템 패키지 설치 및 임시 파일 삭제로 이미지 크기 최소화
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libgl1-mesa-glx \
+    libgl1 \
     libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
