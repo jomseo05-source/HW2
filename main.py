@@ -59,9 +59,9 @@ async def predict_age(file: UploadFile = File(...)):
         return JSONResponse(content={
             "filename": file.filename,
             "prediction": {
-                "age": predicted_age,
-                "gender": predicted_gender,
-                "gender_confidence": round(gender_confidence, 2) if gender_confidence else 0
+                "age": int(predicted_age) if predicted_age is not None else None,
+                "gender": str(predicted_gender) if predicted_gender is not None else None,
+                "gender_confidence": float(round(gender_confidence, 2)) if gender_confidence is not None else 0
             },
             "status": "success",
             "message": "Model updated: Now including gender prediction!"
