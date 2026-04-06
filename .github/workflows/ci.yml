@@ -65,12 +65,19 @@ jobs:
         run: docker pull ${{ secrets.DOCKERHUB_USERNAME }}/age-prediction-api:latest
 
       - name: Stop and Remove Existing Container
-        # 기존에 실행 중인 컨테이너가 있으면 강제로 종료/삭제 (오류 무시)
+        # [Windows 특화] 기존 컨테이너가 있으면 안전하게 정리
+        shell: pwsh
         run: |
-          docker stop age-prediction-api || true
-          docker rm age-prediction-api || true
+          if (docker ps -a --format '{{.Names}}' | Select-String -Pattern "^age-prediction-api$") {
+              Write-Host "불필요한 기존 컨테이너를 발견하여 정리합니다..."
+              docker stop age-prediction-api
+              docker rm age-prediction-api
+          } else {
+              Write-Host "이미 실행 중인 컨테이너가 없습니다."
+          }
 
       - name: Run New Container
-        # 새로운 이미지로 서버용 컨테이너 실행 (Backgound로 돌림)
+        # 새로운 이미지로 서버용 컨테이너 실행 (Background)
+        shell: pwsh
         run: |
           docker run -d --name age-prediction-api -p 8000:8000 ${{ secrets.DOCKERHUB_USERNAME }}/age-prediction-api:latest
